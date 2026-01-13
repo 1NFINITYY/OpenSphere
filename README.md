@@ -1,51 +1,178 @@
-# OpenSphere - Tiptap Pagination Assignment
+# OpenSphere
 
-This project implements a Tiptap-based document editor with real-time visual pagination, designed to match US Letter print output.
+OpenSphere is a Next.js-based rich text editor that implements **real-time visual pagination** using **Tiptap (ProseMirror)**.
+It is designed to closely mimic **print-style documents (US Letter)** while still behaving like a modern web editor.
 
-## Features
+The core focus of this project is **layout-aware pagination**, where content dynamically flows across virtual pages as the user types.
 
-- **Visual Page Breaks**: Shows distinct pages (8.5" x 11") with 1-inch margins.
-- **Real-time Pagination**: Automatically calculates content height and inserts visual separation between pages.
-- **Standard Formatting**: Supports Headings, Lists, Bold, Italic, and Alignment.
-- **Tech Stack**: Next.js, Tailwind CSS, Tiptap, ProseMirror.
+---
 
-## Setup Instructions
+## ✨ Key Features
 
-1.  **Installation**:
-    ```bash
+- **Real-Time Visual Pagination**
+  - Pages follow US Letter dimensions (8.5" × 11")
+  - Automatic page breaks based on rendered content height
+
+- **Tiptap-Powered Rich Text Editing**
+  - Headings, paragraphs, lists
+  - Bold, italic, text alignment
+  - Tables with headers, rows, and cells
+
+- **Print-Oriented Layout**
+  - Accurate margins and spacing
+  - Editor width matches printable documents
+
+- **Modern UI Stack**
+  - Tailwind CSS for styling
+  - Clean, minimal editor interface
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+- Next.js 16
+- React 19
+- Tiptap v3 (ProseMirror)
+- Tailwind CSS
+- clsx
+- tailwind-merge
+
+### Editor & Utilities
+- @tiptap/starter-kit
+- @tiptap/extension-table
+- @tiptap/extension-text-align
+- html2canvas
+- jspdf
+
+---
+
+## 📦 Installation & Setup
+
+Install dependencies:
+
     npm install
-    ```
-2.  **Run Development Server**:
-    ```bash
+
+Run the development server:
+
     npm run dev
-    ```
-3.  **Open Browser**:
-    Navigate to `http://localhost:3000`.
 
-## Architecture & approach
+Open in browser:
 
-### Pagination Strategy
-The core challenge was to display page breaks content using Tiptap (which uses a single `contenteditable` element) while mimicking a paged document.
+    http://localhost:3000
 
-My approach involved:
-1.  **Visual Layout**: The editor container is styled to match US Letter dimensions (816px width).
-2.  **Custom Extension (`PaginationExtension`)**: I created a ProseMirror plugin that hooks into the editor's update cycle.
-    - It measures the rendered height of top-level blocks in the DOM.
-    - It accumulates height relative to the page height (1056px).
-    - When a block crosses a page boundary, it inserts a **Widget Decoration** (a visual spacer) that creates the appearance of a gap between pages.
-    - This ensures that text flows naturally while giving the user feedback on where page breaks will occur.
+---
 
-### Trade-offs & Limitations
-- **Splitting Paragraphs**: Currently, if a single paragraph exceeds the remaining space on a page, the *entire* paragraph is pushed to the next page (or cuts across if it's larger than a full page). I chose this trade-off to avoid the complexity of splitting text nodes or implementing a paged content model, which would significantly increase scope.
-- **Performance**: Measuring DOM height on every update can be expensive for very large documents. I implemented basic throttling/checks, but for a production app, I would implement a more robust intersection observer or incremental measurement system.
+## 🧠 Core Architecture & Approach
 
-### Future Improvements
-1.  **Content Splitting**: Implement a sophisticated `Slice` logic to split long paragraphs across pages visually.
-2.  **Header/Footer Support**: Use the widget decorations to render editable headers/footers in the gaps.
-3.  **PDF Export**: Use `pagedjs` or Puppeteer to generate a PDF that matches the editor view exactly.
+### Why Pagination Is Hard in Tiptap
 
-## Project Structure
+Tiptap (built on ProseMirror) uses a **single contenteditable DOM tree**.
+Unlike traditional document editors such as Microsoft Word or Google Docs, it has **no native concept of pages**.
 
-- `src/components/TiptapEditor.jsx`: The main editor component.
-- `src/components/PaginationExtension.js`: The custom logic for pagination measurements.
-- `src/app/globals.css`: Global styles and print media queries.
+This project simulates paged documents **without breaking ProseMirror’s document model**.
+
+---
+
+## 📄 Pagination Strategy
+
+Pagination is handled through a **custom ProseMirror plugin** that measures rendered DOM content and inserts visual page breaks.
+
+### How It Works
+
+1. **Fixed Page Dimensions**
+   - Page width matches US Letter size
+   - Page height calculated in pixels
+   - Margins applied using CSS
+
+2. **DOM Measurement**
+   - On every editor update:
+     - Each top-level block is measured
+     - Heights are accumulated until a page limit is reached
+
+3. **Visual Page Breaks**
+   - When content crosses a page boundary:
+     - A widget decoration is inserted
+     - This creates a visible gap between pages
+   - Text continues to flow naturally
+
+4. **No Document Mutation**
+   - The ProseMirror document remains unchanged
+   - Pagination is purely visual
+
+---
+
+## 🧩 Custom Pagination Extension
+
+The core logic lives inside a custom pagination extension:
+
+- Measures DOM nodes after render
+- Maps DOM positions back to ProseMirror positions
+- Inserts non-editable widget decorations
+- Recalculates pagination on content changes
+
+This approach ensures pagination stays **accurate, reactive, and editor-safe**.
+
+---
+
+## ⚠️ Trade-offs & Limitations
+
+- **Large Paragraphs**
+  - Paragraphs are treated as atomic blocks
+  - If a paragraph exceeds remaining page space:
+    - It may move entirely to the next page
+    - Very large paragraphs can overflow a page
+  - Text-level splitting is intentionally avoided
+
+- **Performance**
+  - DOM measurement runs on editor updates
+  - Works well for medium-sized documents
+  - Extremely large documents may require optimization
+
+---
+
+## 🚀 Future Improvements
+
+- Smart paragraph splitting across pages
+- Header and footer support
+- True print-to-PDF parity
+- Optimized pagination using observers
+- Editable page size and margin presets
+
+---
+
+## 📁 Project Structure
+
+    src/
+    ├── app/
+    │   ├── globals.css
+    │   └── page.jsx
+    │
+    ├── components/
+    │   ├── TiptapEditor.jsx
+    │   └── PaginationExtension.js
+    │
+    └── styles/
+        └── editor.css
+
+---
+
+## 📌 Summary
+
+OpenSphere demonstrates how **print-style pagination** can be implemented in a modern web editor without modifying ProseMirror’s core document model.
+
+It focuses on:
+- Layout accuracy
+- Real-time visual feedback
+- Clean separation of concerns
+
+This project works well as:
+- A pagination proof-of-concept
+- A foundation for document editors
+- An advanced frontend engineering project
+
+---
+
+## 📄 License
+
+This project is intended for educational and experimental purposes.
