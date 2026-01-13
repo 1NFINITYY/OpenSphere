@@ -1,0 +1,280 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --page-height: 1056px;
+  /* US Letter Standard */
+  --page-gap: 48px;
+  --page-total: calc(var(--page-height) + var(--page-gap));
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: #f3f4f6;
+  min-height: 100vh;
+}
+
+/* =========================
+   Print Styles
+========================= */
+
+@media print {
+  @page {
+    margin: 0;
+    size: A4;
+    /* Lock to A4 */
+  }
+
+  body {
+    background: white;
+  }
+
+  .no-print {
+    display: none;
+  }
+
+  /* 
+     Collapse the 48px visual gap in print.
+     Spacer = MarginBottom + Gap + MarginTop + Slack.
+     We remove Gap (48px) to align Page N+1.
+     FIX: Removed break-inside: avoid. The spacer must straddle the page break.
+  */
+  /* 
+     FIX for Page Drift:
+     Instead of collapsing margins and hoping the browser splits correctly every N pixels
+     (which leads to drift after 50+ pages due to rounding), we EXPLICITLY force a page break.
+     
+     This resets the coordinate system for each physical page.
+  */
+  /* 
+    Ensure no other elements interfere with the break.
+    We might need to adjust the print container's scale interaction.
+    If breaks are explicit, the scale might need to be applied strictly.
+  */
+  .page-spacer {
+    display: block !important;
+    /* 
+       To simulate top margin on pages 2+, we give the spacer height.
+       Since it has 'break-before: page', it sits at the very top of the new page.
+       96px height matches the container's top padding on Page 1.
+    */
+    height: 96px !important;
+    margin: 0 !important;
+    border: none !important;
+    break-before: page;
+    page-break-before: always;
+    /* Legacy support */
+  }
+
+  /* 
+    Ensure no other elements interfere with the break.
+    We might need to adjust the print container's scale interaction.
+    If breaks are explicit, the scale might need to be applied strictly.
+  */
+  .print-container {
+    margin: 0 auto !important;
+    padding: 96px 96px 0 96px !important;
+
+    /* WIDTH: US Letter (816px) */
+    width: 816px !important;
+
+    /* HEIGHT: Auto (flow naturally) */
+    height: auto !important;
+
+    /* OPTIONAL: Adjust scale if 'break-before' acts weird with transform */
+    /* Tested: explicit breaks usually work inside transforms in modern browsers, 
+       but sometimes it's safer to rely on 'zoom' or simple flow if possible.
+       Let's keep the scale for now as it fits US Letter -> A4. 
+    */
+    /* 
+       UPDATED: Scale 0.96 to fit US Letter (816px) into A4 width more tightly.
+       This reduces the empty space at the bottom (double padding effect).
+    */
+    transform: scale(0.96) !important;
+    transform-origin: top center !important;
+
+    box-sizing: border-box !important;
+    background: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    /* Ensure content doesn't get clipped at breaks */
+  }
+}
+
+/* =========================
+   Tiptap Styles
+========================= */
+
+.tiptap {
+  outline: none;
+  min-height: 100%;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* =========================
+   Typography for Editor
+========================= */
+
+.tiptap h1 {
+  font-size: 2.25em;
+  /* 36px */
+  font-weight: 800;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.tiptap h2 {
+  font-size: 1.75em;
+  /* 28px */
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.tiptap h3 {
+  font-size: 1.5em;
+  /* 24px */
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.tiptap ul,
+.tiptap ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+  list-style-type: disc;
+  /* Ensure bullets are visible */
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap li {
+  margin-bottom: 0.25em;
+}
+
+.tiptap p {
+  margin-bottom: 1em;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* Essential for long continuous strings */
+}
+
+/* =========================
+   Print Container
+========================= */
+
+.print-container {
+  background-color: transparent !important;
+  background-image: linear-gradient(to bottom,
+      white 0px,
+      white var(--page-height),
+      transparent var(--page-height),
+      transparent var(--page-total));
+  background-size: 100% var(--page-total);
+  background-repeat: repeat-y;
+
+  /* Shadow only around white page areas */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+
+  /* Remove outer border shadow */
+  box-shadow: none !important;
+}
+
+/* =========================
+   Print Styles
+========================= */
+
+/* =========================
+   Pagination Spacer
+========================= */
+
+.page-spacer {
+  width: 100%;
+  pointer-events: none;
+  position: relative;
+}
+
+.page-spacer::before {
+  display: none;
+}
+
+/* =========================
+   Final Page Footer
+========================= */
+
+.page-footer {
+  position: relative;
+  pointer-events: none;
+  width: 100%;
+}
+
+.page-footer::after {
+  display: none;
+}
+
+/* =========================
+   Table Styles
+========================= */
+
+.tiptap table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.tiptap td,
+.tiptap th {
+  min-width: 1em;
+  border: 1px solid #ced4da;
+  padding: 3px 5px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.tiptap th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f1f3f5;
+}
+
+.tiptap .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+
+.tiptap .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #adf;
+  pointer-events: none;
+}
